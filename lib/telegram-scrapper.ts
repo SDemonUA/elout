@@ -55,7 +55,7 @@ export async function getSchedule() {
         const msgDate = meta.find('time').attr('datetime') || ''
         scheduleArticle = {
           url: meta.attr('href') || '',
-          date: msgDate,
+          date: new Date(msgDate).toISOString(),
           schedule,
           scheduleDate: parseScheduleTargetDate(messageText, msgDate)
         }
