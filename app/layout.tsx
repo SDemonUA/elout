@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import Footer from "../components/footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const fixel = localFont({
+  src: "../public/FixelVariable.ttf",
+  variable: "--font-fixel",
+  weight: "100 900",
+  style: "normal",
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -27,9 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${fixel.variable} ${geistMono.variable} antialiased`}>
         {children}
         <Footer />
         <Analytics />
