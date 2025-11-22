@@ -1,8 +1,6 @@
 import { load } from 'cheerio'
 import type { ScheduleInfo } from '../types'
 
-export const revalidate = 0
-
 const CHANNEL_ID = 'pat_cherkasyoblenergo'
 const BASE_URL = `https://t.me/s/`
 const CHANNEL_URL = `${BASE_URL}${CHANNEL_ID}`
@@ -11,7 +9,7 @@ export async function getSchedule() {
   try {
     const res = await fetch(CHANNEL_URL, {
       next: {
-        revalidate: 5
+        revalidate: 5 * 60, // Revalidate every 5 minutes
       }
     })
     const text = await res.text()
