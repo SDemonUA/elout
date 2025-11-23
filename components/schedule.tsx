@@ -1,97 +1,115 @@
 "use client";
 
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ScheduleInfo } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { cn } from "@/lib/utils";
+import Chip from "./chip";
 
 const step = 30;
 
 export default function Schedule({ schedule }: { schedule: ScheduleInfo }) {
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(
-    getStoredGroup()
-  );
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedGroups = searchParams.get("groups")?.split(",") || [];
 
   function toggleGroupSelection(group: string) {
-    const newGroup = selectedGroup === group ? null : group;
-    setSelectedGroup(newGroup);
-    if (newGroup === null) localStorage.removeItem("selectedGroup");
-    else localStorage.setItem("selectedGroup", newGroup);
+    let newSelectedGroups: string[];
+
+    if (selectedGroups.includes(group)) {
+      newSelectedGroups = selectedGroups.filter((g) => g !== group);
+    } else {
+      newSelectedGroups = [...selectedGroups, group];
+      newSelectedGroups.sort();
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    if (newSelectedGroups.length > 0) {
+      params.set("groups", newSelectedGroups.join(","));
+    } else {
+      params.delete("groups");
+    }
+    router.replace(`?${params.toString()}`);
+  }
+
+  function setView(view: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", view);
+    router.replace(`?${params.toString()}`);
   }
 
   const groups = schedule ? Object.keys(schedule.schedule) : [];
+  const groupsToDisplay = selectedGroups.length > 0 ? selectedGroups : groups;
 
   return (
-    <Tabs defaultValue="table" className="w-full">
+    <Tabs
+      defaultValue="table"
+      className="w-full"
+      value={searchParams.get("view") || undefined}
+      onValueChange={setView}
+    >
       <TabsList className="m-auto">
         <TabsTrigger value="table">Таблиця</TabsTrigger>
         <TabsTrigger value="text">Текст</TabsTrigger>
       </TabsList>
+      <div className="flex flex-wrap justify-center m-1 gap-2.5">
+        {groups.map((group) => (
+          <Chip
+            key={group}
+            onClick={() => toggleGroupSelection(group)}
+            selected={selectedGroups.includes(group)}
+          >
+            {group}
+          </Chip>
+        ))}
+      </div>
       <TabsContent value="table">
-        <table className="table-fixed max-w-3xl w-full text-center">
-          <thead>
-            <tr>
-              <th className="w-16"></th>
-              {groups.map((group) => (
-                <th
-                  key={group}
-                  className="p-1 dark:aria-selected:bg-white/15 aria-selected:bg-black/15 cursor-pointer "
-                  data-group={group}
-                  aria-selected={selectedGroup === group || undefined}
-                  onClick={() => toggleGroupSelection(group)}
-                >
-                  {group}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: 24 * (60 / step) }, (_, i) => i * step).map(
-              (time) => {
-                return (
-                  <tr key={time} className="has-aria-[selected]:*:opacity-50">
-                    <td className="font-mono">{formatTime(time)}</td>
-                    {groups.map((group) => {
-                      const isActive = schedule.schedule[group].some(
-                        ([startMin, endMin]) =>
-                          time >= startMin && time < endMin
-                      );
-                      return (
-                        <td
-                          key={group}
-                          aria-selected={selectedGroup === group || undefined}
-                          data-group={group}
-                          className="aria-selected:opacity-100"
-                          onClick={() => toggleGroupSelection(group)}
-                          style={{
-                            backgroundColor: !isActive
-                              ? "lightgreen"
-                              : "lightcoral",
-                          }}
-                        >
-                          {isActive ? "●" : "○"}
-                        </td>
-                      );
-                    })}
-                  </tr>
+        <div
+          className="grid"
+          style={{
+            gridTemplateColumns: `auto repeat(${groupsToDisplay.length}, 1fr)`,
+          }}
+        >
+          <div key="head-time" className="bg-background sticky top-0"></div>
+          {groupsToDisplay.map((group) => (
+            <div
+              key={`head-${group}`}
+              className="p-1 text-center font-semibold even:bg-secondary bg-background sticky top-0"
+            >
+              {group}
+            </div>
+          ))}
+          {groupsToDisplay.length % 2 === 0 ? <div className="hidden"></div> : null}
+
+          {Array.from({ length: 24 * (60 / step) }, (_, i) => i * step).map((time) => {
+            return [
+              <div key={`r${step}-time`} className="font-mono text-right pr-1 py-0.5">
+                {formatTime(time)}
+              </div>,
+              ...groupsToDisplay.map((group) => {
+                const isOutage = schedule.schedule[group].some(
+                  ([startMin, endMin]) => time >= startMin && time < endMin
                 );
-              }
-            )}
-          </tbody>
-        </table>
+                return (
+                  <div
+                    key={`r${step}-${group}`}
+                    className={cn("even:bg-secondary bg-background", {
+                      "bg-destructive/50!": isOutage,
+                    })}
+                  ></div>
+                );
+              }),
+              groupsToDisplay.length % 2 === 0 ? <div className="hidden"></div> : null,
+            ];
+          })}
+        </div>
       </TabsContent>
       <TabsContent value="text">
         <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(12rem,1fr))]">
-          {groups.map((group) => {
+          {groupsToDisplay.map((group) => {
             const ranges = schedule.schedule[group];
             return (
-              <Card
-                key={group}
-                aria-selected={selectedGroup === group || undefined}
-                data-group={group}
-                onClick={() => toggleGroupSelection(group)}
-                className="cursor-pointer aria-selected:bg-secondary text-center"
-              >
+              <Card key={group} className="text-center">
                 <CardHeader>
                   <CardTitle>Група {group}</CardTitle>
                 </CardHeader>
@@ -119,9 +137,4 @@ function formatTime(minutes: number) {
     .padStart(2, "0");
   const minute = (minutes % 60).toString().padStart(2, "0");
   return `${hour}:${minute}`;
-}
-
-function getStoredGroup(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("selectedGroup");
 }
