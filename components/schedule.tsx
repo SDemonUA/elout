@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ScheduleInfo } from "../types";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "./ui/card";
 import { cn } from "@/lib/utils";
 import Chip from "./chip";
 
@@ -40,6 +40,13 @@ export default function Schedule({ schedule }: { schedule: ScheduleInfo }) {
 
   const groups = schedule ? Object.keys(schedule.schedule) : [];
   const groupsToDisplay = selectedGroups.length > 0 ? selectedGroups : groups;
+
+  const durationFormat = new Intl.NumberFormat("uk", {
+    style: "unit",
+    unit: "hour",
+    compactDisplay: "short",
+    useGrouping: true,
+  });
 
   return (
     <Tabs
@@ -109,7 +116,7 @@ export default function Schedule({ schedule }: { schedule: ScheduleInfo }) {
           {groupsToDisplay.map((group) => {
             const ranges = schedule.schedule[group];
             return (
-              <Card key={group} className="text-center">
+              <Card key={group} className="text-center pb-2">
                 <CardHeader>
                   <CardTitle>Група {group}</CardTitle>
                 </CardHeader>
@@ -122,6 +129,12 @@ export default function Schedule({ schedule }: { schedule: ScheduleInfo }) {
                     ))}
                   </ul>
                 </CardContent>
+                <CardFooter className="text-right text-xs justify-end">
+                  Всього без світла{" "}
+                  {durationFormat.format(
+                    ranges.reduce((acc, [startMin, endMin]) => acc + (endMin - startMin), 0) / 60
+                  )}
+                </CardFooter>
               </Card>
             );
           })}

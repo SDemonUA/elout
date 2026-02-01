@@ -28,16 +28,18 @@ export class CherkasyScheduleProvider implements ScheduleProvider {
 
           // Target line example: "1.1 00:00 - 00:30, 02:30 - 04:30, 08:00 - 11:00, 14:00 - 17:00, 19:00 - 22:00"
           messageText.split("\n").forEach((line) => {
-            const lineMatch = line.trim().match(/^(\d+\.\d+)\s+/);
+            const lineMatch = line.trim().match(/^(\d+\.\d+)(:)?\s+/);
             if (lineMatch) {
               const groupName = lineMatch[1];
               const timeRanges = line
                 .trim()
-                .slice(lineMatch[1].length)
+                .slice(lineMatch[0].length)
                 .split(",")
                 .map((range) => range.trim());
+
               for (const timeRange of timeRanges) {
-                const match = timeRange.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
+                const match = timeRange.match(/(\d{2}:\d{2})\s*[––]\s*(\d{2}:\d{2})/);
+
                 if (!match) continue;
 
                 if (!schedule[groupName]) {
