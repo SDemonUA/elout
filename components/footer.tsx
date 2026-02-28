@@ -4,7 +4,7 @@ const feedbackLink =
 export default function Footer() {
   return (
     <footer className="max-w-3xl mx-auto px-4 pb-4 flex flex-col sm:flex-row sm:justify-between items-center text-sm text-foreground/70">
-      <div>Copyrights blah, blah... © 2025</div>
+      <div>Copyrights blah, blah... © 2026</div>
       <div>
         <a
           href={feedbackLink}
