@@ -30,10 +30,13 @@ export default async function Page({ params }: { params: Promise<{ city: string 
   const scheduleProvider = ScheduleProviderFactory.getScheduleProvider(city);
   const schedule = scheduleProvider ? await scheduleProvider.getSchedule() : null;
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
+  const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD" in UTC
   const scheduleDate = schedule ? new Date(schedule.scheduleDate) : null;
-  const isObsolete = scheduleDate && !isNaN(scheduleDate.getTime()) ? scheduleDate < today : true;
+  const scheduleDateStr =
+    scheduleDate && !isNaN(scheduleDate.getTime())
+      ? scheduleDate.toISOString().slice(0, 10)
+      : null;
+  const isObsolete = !scheduleDateStr || scheduleDateStr < todayStr;
 
   if (!schedule || isObsolete) {
     return <EmptySchedule cityLabel={cityLabel} />;
