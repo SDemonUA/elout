@@ -30,8 +30,18 @@ export default async function Page({ params }: { params: Promise<{ city: string 
   const scheduleProvider = ScheduleProviderFactory.getScheduleProvider(city);
   const schedule = scheduleProvider ? await scheduleProvider.getSchedule() : null;
 
-  if (!schedule) {
-    return <EmptySchedule />;
+  const toKyivDateStr = (date: Date) =>
+    date.toLocaleDateString("en-CA", { timeZone: "Europe/Kyiv" }); // "YYYY-MM-DD"
+  const todayStr = toKyivDateStr(new Date());
+  const scheduleDate = schedule ? new Date(schedule.scheduleDate) : null;
+  const scheduleDateStr =
+    scheduleDate && !isNaN(scheduleDate.getTime())
+      ? toKyivDateStr(scheduleDate)
+      : null;
+  const isObsolete = !scheduleDateStr || scheduleDateStr < todayStr;
+
+  if (!schedule || isObsolete) {
+    return <EmptySchedule cityLabel={cityLabel} />;
   }
 
   // TODO: This code called on server side so it doesn't know utc offset of the user
