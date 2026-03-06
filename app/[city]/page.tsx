@@ -30,8 +30,13 @@ export default async function Page({ params }: { params: Promise<{ city: string 
   const scheduleProvider = ScheduleProviderFactory.getScheduleProvider(city);
   const schedule = scheduleProvider ? await scheduleProvider.getSchedule() : null;
 
-  if (!schedule) {
-    return <EmptySchedule />;
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const scheduleDate = schedule ? new Date(schedule.scheduleDate) : null;
+  const isObsolete = scheduleDate && !isNaN(scheduleDate.getTime()) ? scheduleDate < today : true;
+
+  if (!schedule || isObsolete) {
+    return <EmptySchedule cityLabel={cityLabel} />;
   }
 
   // TODO: This code called on server side so it doesn't know utc offset of the user
