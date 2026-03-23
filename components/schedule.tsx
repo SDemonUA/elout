@@ -95,9 +95,10 @@ export default function Schedule({ schedule }: { schedule: ScheduleInfo }) {
                 {formatTime(time)}
               </div>,
               ...groupsToDisplay.map((group) => {
-                const isOutage = schedule.schedule[group].some(
-                  ([startMin, endMin]) => time >= startMin && time < endMin,
-                );
+                const ranges = schedule.schedule[group];
+                const isOutage = ranges
+                  ? ranges.some(([startMin, endMin]) => time >= startMin && time < endMin)
+                  : false;
                 return (
                   <div
                     key={`r${step}-${group}`}
@@ -116,6 +117,7 @@ export default function Schedule({ schedule }: { schedule: ScheduleInfo }) {
         <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(12rem,1fr))]">
           {groupsToDisplay.map((group) => {
             const ranges = schedule.schedule[group];
+            if (!ranges) return null;
             return (
               <Card key={group} className="text-center pb-2">
                 <CardHeader>
